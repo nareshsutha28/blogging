@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_yasg',
     'user',
+    'post'
 ]
 
 MIDDLEWARE = [
@@ -119,7 +120,9 @@ REST_FRAMEWORK = {
     'NON_FIELD_ERRORS_KEY': 'detail',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 10,  # Number of items per page
 }
 
 # Configuration for simple jwt 
