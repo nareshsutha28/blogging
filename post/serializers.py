@@ -9,6 +9,18 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = ['id', 'title', 'body', 'author', 'timestamp', 'slug']
 
+    def validate_title(self, value):
+        if len(value) < 5:
+            raise serializers.ValidationError("Title must be at least 5 characters long.")
+        if len(value) > 100:
+            raise serializers.ValidationError("Title cannot exceed 100 characters.")
+        return value
+
+    def validate_body(self, value):
+        if len(value) < 10:
+            raise serializers.ValidationError("Body must be at least 5 characters long.")
+        return value
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.email')
@@ -17,3 +29,10 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = ['id', 'body', 'author', 'post', 'timestamp']
+
+    def validate_body(self, value):
+        if len(value) < 5:
+            raise serializers.ValidationError("Title must be at least 5 characters long.")
+        if len(value) > 200:
+            raise serializers.ValidationError("Title cannot exceed 200 characters.")
+        return value
