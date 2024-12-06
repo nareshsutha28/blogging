@@ -20,7 +20,7 @@ from rest_framework import permissions
 from user.views import (RegisterUserView, LoginAPIView,
                          CustomRefreshTokenView, LogoutApiView)
 from post.views import (PostListCreateAPIView, PostDetailAPIView, 
-                        CommentListCreateAPIView)
+                        CommentListCreateAPIView, TopCommentedPostsAPIView)
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -52,6 +52,9 @@ urlpatterns = [
 
     # Comments Related Apis
     path('posts/<slug:slug>/comments/', CommentListCreateAPIView.as_view(), name='get_create_comment'),
+
+    # Custom Api To get Top 5 most commented Post
+    path('top-five-posts/', TopCommentedPostsAPIView.as_view(), name='top_five_post'),
 
     # Swagger related urls
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

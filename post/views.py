@@ -1,5 +1,5 @@
 from rest_framework.generics import GenericAPIView
-from django.db.models import Q
+from django.db.models import Q, Count
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
@@ -7,7 +7,8 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from post.models import Post
-from post.serializers import PostSerializer, CommentSerializer
+from post.serializers import (PostSerializer, CommentSerializer,
+                            TopCommentPostSerializer)
 from blogging.utils import get_response
 
 
@@ -187,3 +188,26 @@ class CommentListCreateAPIView(GenericAPIView):
             return get_response(status.HTTP_201_CREATED, "Comment created successfully", serializer.data)
 
         return get_response(status.HTTP_400_BAD_REQUEST, "Invalid Request Body", serializer.errors)
+
+
+class TopCommentedPostsAPIView(GenericAPIView):
+    """
+    API to get the top five most commented posts.
+    """
+    permission_classes = [IsAuthenticated]  # Anyone can access this API
+
+    @swagger_auto_schema(
+        operation_description="Retrieve the top five most commented posts",
+        responses={
+            200: openapi.Response(description="Posts fetching Successfully", examples={
+                "application/json": {"status": 200, "msg": "Posts fetching Successfully", "data": []}
+            })},
+    )
+    def get(self, request):
+        # Annotate posts with the count of their comments and order them by count (descending)
+        top_commented_posts = Post.objects.annotate(comment_count=Count('comments')).order_by('-comment_count', '-timestamp')
+        if top_commented_posts.count() > 5:
+            top_commented_posts = top_commented_posts[:5]
+        
+        serializer = TopCommentPostSerializer(top_commented_posts, many=True)
+        return get_response(status.HTTP_200_OK, "Top commented posts retrieved successfully", serializer.data)

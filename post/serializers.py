@@ -36,3 +36,13 @@ class CommentSerializer(serializers.ModelSerializer):
         if len(value) > 200:
             raise serializers.ValidationError("Title cannot exceed 200 characters.")
         return value
+
+
+class TopCommentPostSerializer(serializers.ModelSerializer):
+    author = serializers.ReadOnlyField(source='author.email')
+    post = serializers.ReadOnlyField(source='post.title')
+    comment_count = serializers.CharField() 
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'body', 'author', 'post', 'comment_count', 'timestamp']
