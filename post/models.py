@@ -11,6 +11,12 @@ class Post(models.Model):
     slug = models.SlugField(unique=True, blank=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        indexes = [
+            models.Index(fields=['slug']),  # Explicitly add an index for the slug field
+            models.Index(fields=['author'])
+        ]
+
     '''I have desided scenario from my side that multiple blog post can have same title,
     If any will come like that i will add that timestamp to make slug unique.'''  
     def save(self, *args, **kwargs):
@@ -31,6 +37,12 @@ class Comment(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='comments')
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='comments')
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['post']),  # Explicitly add an index for the slug field
+            models.Index(fields=['author'])
+        ]
 
     def __str__(self):
         return f"Comment by {self.author.email} on {self.post.title}"
