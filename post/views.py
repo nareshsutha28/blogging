@@ -7,7 +7,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 
 from post.models import Post
-from post.serializers import PostSerializer
+from post.serializers import PostSerializer, CommentSerializer
 from blogging.utils import get_response
 
 
@@ -113,3 +113,77 @@ class PostDetailAPIView(GenericAPIView):
 
         post.delete()
         return get_response(status.HTTP_200_OK, "Post deleted successfully", {})
+
+
+class CommentListCreateAPIView(GenericAPIView):
+    """
+    API view to list and create comments for a specific post identified by its slug.
+    """
+    permission_classes = [IsAuthenticated]
+    pagination_class = PageNumberPagination  # Enable pagination
+
+    def get_post_object(self, slug):
+        """
+        Get a Post object by its slug. Returns None if not found.
+        """
+        return Post.objects.filter(slug=slug).first()
+
+    @swagger_auto_schema(
+        operation_description="Get the list of comments for a post with pagination ordered by timestamp",
+        manual_parameters=[
+            openapi.Parameter('page', openapi.IN_QUERY, description="Page number", type=openapi.TYPE_INTEGER),
+        ],
+        responses={
+            200: openapi.Response("Paginated list of comments", CommentSerializer(many=True)),
+            400: openapi.Response(description="Invalid slug", examples={
+                "application/json": {"status": 400, "msg": "Invalid slug", "data": []}
+            }),
+        },
+    )
+    def get(self, request, slug):
+        """
+        Handle GET requests to fetch a paginated list of comments for a post.
+        """
+        post_object = self.get_post_object(slug)
+        if not post_object:
+            return get_response(status.HTTP_400_BAD_REQUEST, "Invalid slug data", [])
+
+        comment_queryset = post_object.comments.select_related("post", "author").all().order_by("-timestamp")
+
+        # Paginate the queryset
+        paginator = self.pagination_class()
+        paginated_comments = paginator.paginate_queryset(comment_queryset, request)
+        serializer = CommentSerializer(paginated_comments, many=True)
+
+        return paginator.get_paginated_response({
+            "status": status.HTTP_200_OK,
+            "msg": "Retrieved comments successfully",
+            "data": serializer.data
+        })
+
+    @swagger_auto_schema(
+        operation_description="Create a new comment for a post",
+        request_body=CommentSerializer,
+        responses={
+            201: openapi.Response(description="Comment created successfully", examples={
+                "application/json": {"status": 201, "msg": "Comment created successfully", "data": {}}
+            }),
+            400: openapi.Response(description="Invalid Request Body", examples={
+                "application/json": {"status": 400, "msg": "Invalid Request Body", "data": {}}
+            }),
+        },
+    )
+    def post(self, request, slug):
+        """
+        Handle POST requests to create a comment for a specific post.
+        """
+        post_object = self.get_post_object(slug)
+        if not post_object:
+            return get_response(status.HTTP_400_BAD_REQUEST, "Invalid slug data", [])
+
+        serializer = CommentSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(author=request.user, post=post_object)
+            return get_response(status.HTTP_201_CREATED, "Comment created successfully", serializer.data)
+
+        return get_response(status.HTTP_400_BAD_REQUEST, "Invalid Request Body", serializer.errors)

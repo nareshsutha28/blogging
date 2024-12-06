@@ -19,7 +19,8 @@ from django.urls import path
 from rest_framework import permissions
 from user.views import (RegisterUserView, LoginAPIView,
                          CustomRefreshTokenView, LogoutApiView)
-from post.views import PostListCreateAPIView, PostDetailAPIView
+from post.views import (PostListCreateAPIView, PostDetailAPIView, 
+                        CommentListCreateAPIView)
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
 
@@ -48,6 +49,9 @@ urlpatterns = [
     # Post Related Apis
     path('posts/', PostListCreateAPIView.as_view(), name='get_create_post'),
     path('posts/<slug:slug>/', PostDetailAPIView.as_view(), name='post_detail'),
+
+    # Comments Related Apis
+    path('posts/<slug:slug>/comments/', CommentListCreateAPIView.as_view(), name='get_create_comment'),
 
     # Swagger related urls
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
